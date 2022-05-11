@@ -15,7 +15,7 @@ pip==22.0.4
 portalocker==2.4.0
 pycparser==2.21
 PyJWT==2.3.0
-pywin32==304
+
 PyYAML==6.0
 requests==2.27.1
 setuptools==62.1.0
