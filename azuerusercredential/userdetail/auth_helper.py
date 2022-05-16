@@ -1,3 +1,4 @@
+import requests
 import yaml
 import msal
 import os
@@ -83,3 +84,24 @@ def remove_user_and_token(request):
 
   if 'user' in request.session:
     del request.session['user']
+
+def get_azure_management_token(request):
+
+    refresh_token_cache = request.session.get('refresh_token_cache')
+
+    #set headers
+    headers = {
+        'client_id': settings['app_id'],
+        'scope': 'https://management.azure.com/user_impersonation',
+        'refresh_token': refresh_token_cache,
+        'grant_type': 'refresh_token',
+        'client_secret': settings['app_secret']
+    }
+
+    # Send POST to https://login.microsoftonline.com/common/oauth2/v2.0/token
+    result = requests.post('https://login.microsoftonline.com/common/oauth2/v2.0/token',
+                    data=headers).json()
+
+    azure_token = result['access_token']
+    return azure_token
+

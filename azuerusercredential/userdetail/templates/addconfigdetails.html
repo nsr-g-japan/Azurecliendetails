@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>
+   Add Configuration Details
+
+</h1><h1>
+   Add Configuration Details
+    <a href="{% url 'configdetails' %}" class="btn btn-light btn-sm mb-3 float-right">Back</a>
+</h1>
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+    Enter the User ID: <input type="text" name="userid" ><br><br>
+    Enter the Host ID: <input type="text" name="hostid" ><br><br>
+    Enter the Server Name: <input type="text" name="servername" ><br><br>
+    Enter the DataBase Name:  <input type="text" name="database" ><br><br>
+
+                  <button type="submit">Add Data</button><br><br>
+
+</form>
+
+
+{% endblock %}

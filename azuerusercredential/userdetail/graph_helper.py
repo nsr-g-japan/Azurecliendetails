@@ -1,6 +1,8 @@
 import json
 
 import requests
+from azure.storage.blob import BlockBlobService
+
 graph_url = 'https://graph.microsoft.com/v1.0'
 
 
@@ -17,6 +19,48 @@ def get_user(token):
   # Return the JSON result
   return user.json()
 
+def get_subscription_list(azure_token):
+  # Set headers
+  headers = {
+    'Authorization': 'Bearer {0}'.format(azure_token)
+  }
+
+  # Send GET to https://management.azure.com/subscriptions?api-version=2020-01-01
+  subscriptionList = requests.get('https://management.azure.com/subscriptions?api-version=2020-01-01',
+                        headers=headers)
+
+  # Return the JSON result
+  return subscriptionList.json()
+
+
+def get_storageaccount_list(azure_token,subscriptionId):
+  # Set headers
+  headers = {
+    'Authorization': 'Bearer {0}'.format(azure_token)
+  }
+
+  # Send GET to https://management.azure.com/subscriptions/{subscription-id}/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01
+  storageAccountList = requests.get('https://management.azure.com/subscriptions/{0}/providers/Microsoft.Storage/storageAccounts?api-version=2021-04-01'.format(subscriptionId),
+                                  headers=headers)
+
+  # Return the JSON result
+  return storageAccountList.json()
+
+
+
+def get_blob_list(azure_token, accountname):
+  # Set headers
+  headers = {
+    'Authorization': 'Bearer {0}'.format(azure_token)
+  }
+  blobList = requests.get('https://management.azure.com{0}/blobServices/default/containers?api-version=2021-04-01'.format(accountname), headers=headers)
+
+  return blobList.json()
+
+
+def get_blob_details(token, acc_name, container_name):
+  server = BlockBlobService(acc_name, token)
+  return server.list_blobs(container_name)
 
 def get_calendar_events(token, start, end, timezone):
   # Set headers

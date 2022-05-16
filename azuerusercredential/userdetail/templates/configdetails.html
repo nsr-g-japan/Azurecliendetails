@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+  <h1>
+    Configuration Details
+
+</h1>
+
+  <h1>
+    Configuration Details
+    <a href="{% url 'addconfigdetails' %}" class="btn btn-light btn-sm mb-3 float-right">ADD</a>
+</h1>
+
+<table  border="5" width="100%" class="meta">
+    <thead>
+    <th>User ID</th>
+    <th>Host ID</th>
+    <th>ServerName</th>
+    <th>Database</th>
+
+    </thead>
+    {% for i in rows %}
+    <tr>
+    <td>{{i.userid}}</td>
+    <td>{{i.hostid}}</td>
+    <td>{{i.servername}}</td>
+    <td>{{i.database}}</td>
+        <td> <a href="updatedata?uid={{ i.userid }}"> Edit </a></td>
+        <td> <a href="deletedata?uid={{ i.userid }}"> Delete </a></td>
+
+    </tr>
+    {% endfor %}
+
+</table><br><br>
+{% endblock %}
