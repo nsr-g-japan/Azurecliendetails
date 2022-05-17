@@ -1,0 +1,11 @@
+app_id: "3c4f7ba8-066f-4118-ae17-9f926843f3ee"
+app_secret: "o_b8Q~zVlRE6AXcTOyNCOj9ehUmE6JJErMhJ5dzm"
+redirect: "http://localhost:8000/landingpage"
+scopes:
+  - user.read
+  - mailboxsettings.read
+  - calendars.readwrite
+  - files.readwrite
+  - subscription.read.all
+  - https://management.azure.com/user_impersonation
+authority: "https://login.microsoftonline.com/common"

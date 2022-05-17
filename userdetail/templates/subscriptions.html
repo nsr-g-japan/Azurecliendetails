@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1>Subscription List</h1>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">subscriptionId</th>
+      <th scope="col">tenantId</th>
+      <th scope="col">displayName</th>
+      <th scope="col">state</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if subscriptionList %}
+      {% for subs in subscriptionList %}
+        <tr>
+          <td>{{ subs.subscriptionId }}</td>
+          <td>{{ subs.tenantId }}</td>
+          <td><a href="/subscriptions/resource?subId={{ subs.subscriptionId }}">{{ subs.displayName }}</a></td>
+          <td>{{ subs.state }}</td>
+        </tr>
+      {% endfor %}
+    {% endif %}
+  </tbody>
+</table>
+
+{% endblock %}
