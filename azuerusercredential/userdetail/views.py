@@ -1,33 +1,36 @@
+import re
 from datetime import timedelta, datetime
 
 import pyodbc as pyodbc
 from dateutil import tz, parser
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 from django.urls import reverse
 
 from .auth_helper import *
 from .graph_helper import *
 import logging
+
 db = pyodbc.connect('Driver={SQL server};' 'server=Nisarbasha;' 'Database=dwproject;' 'Trusted_connection=yes;')
 cursor = db.cursor()
 
-
-#Creating and Configuring Logger
+# Creating and Configuring Logger
 
 Log_Format = "%(levelname)s %(asctime)s - %(message)s"
 
-logging.basicConfig(filename = "log_file.log",
-                    filemode = "w",
-                    format = Log_Format,
-                    level = logging.ERROR)
+logging.basicConfig(filename="log_file.log",
+                    filemode="w",
+                    format=Log_Format,
+                    level=logging.ERROR)
 
 logger = logging.getLogger()
 
 # Create your views here.
 global user
-user={}
+user = {}
+
+
 def home(request):
     context = initialize_context(request)
 
@@ -69,8 +72,8 @@ def landingpage(request):
 
     # Get the user's profile
     user = get_user(result['access_token'])
-    userdata(user)
-    dbdatainsert()
+
+    dbuserinsert(user)
     print(type(user))
     print(user['displayName'])
     # Store user
@@ -84,6 +87,222 @@ def user_profile(request):
     return render(request, 'user_profile.html', context)
 
 
+def subscriptions(request):
+    context = initialize_context(request)
+
+    azure_token = get_azure_management_token(request)
+
+    events = get_subscription_list(azure_token)
+
+    if events:
+        context['subscriptionList'] = events['value']
+
+    return render(request, 'subscriptions.html', context)
+
+
+def subscriptionsresource(request):
+    context = initialize_context(request)
+    request.session['subscriptionId'] = request.GET.get('subId', '')
+    context['subscriptionId'] = request.session.get('subscriptionId')
+
+    return render(request, 'subscriptions_resource.html', context)
+
+
+def subscriptionsresource_file_management(request):
+    context = initialize_context(request)
+    context['subscriptionId'] = request.session.get('subscriptionId')
+    azure_token = get_azure_management_token(request)
+
+    storageaccountlist = get_storageaccount_list(azure_token, context['subscriptionId'])
+
+    if storageaccountlist:
+        context['storageAccountList'] = storageaccountlist['value']
+    return render(request, 'file_management.html', context)
+
+
+def bloblist(request):
+    context = initialize_context(request)
+    azure_token = get_azure_management_token(request)
+
+    request.session['storageAccountName'] = request.GET.get('qid', '')
+    request.session['acc_name'] = request.GET.get('acc_name', '')
+    context['storageAccountName'] = request.session.get('storageAccountName')
+    context['acc_name'] = request.session.get('acc_name')
+
+    blob_list = get_blob_list(azure_token, context['storageAccountName'])
+    print(blob_list)
+
+    if blob_list:
+        context['blob_list'] = blob_list['value']
+
+    return render(request, 'bloblist.html', context)
+
+
+def blobdetails(request):
+    context = initialize_context(request)
+    token = get_token(request)
+
+    request.session['blobid'] = request.GET.get('blobid', '')
+    request.session['container_name'] = request.GET.get('container_name', '')
+    context['storageAccountName'] = request.session.get('storageAccountName')
+    context['blobid'] = request.session.get('blobid')
+    context['acc_name'] = request.session.get('acc_name')
+    context['container_name'] = request.session.get('container_name')
+
+    azure_token = 'tSVdeBiewtJ3K1F7qMzc1FBAdqDkcj+tcCdtYsbjGlnM0qQA/fDP758U5cevGvKolBFAl6TxC4CapVwCVcACnA=='
+
+    blob_details = get_blob_details(azure_token, context['acc_name'], context['container_name'])
+
+    if blob_details:
+        context['blob_details'] = blob_details
+    try:
+        if request.method == 'POST' and request.FILES['myfile']:
+            myfile = request.FILES['myfile']
+            block_blob_service = BlockBlobService('setuptest1906',
+                                                  'ttSVdeBiewtJ3K1F7qMzc1FBAdqDkcj+tcCdtYsbjGlnM0qQA/fDP758U5cevGvKolBFAl6TxC4CapVwCVcACnA==')
+            block_blob_service.create_blob_from_bytes(context['container_name'], myfile.name, myfile.read())
+            context['msg'] = ' Uloaded success'
+            return render(request, 'blobdetails.html', context)
+    except Exception as e:
+        errormsg = str(e).split('.')
+        context['msg'] = errormsg[0]
+        return render(request, 'blobdetails.html', context)
+
+    return render(request, 'blobdetails.html', context)
+
+
+def configdetails(request):
+    context = initialize_context(request)
+    record = cursor.execute("select * from config_details where config_is_deleted='0' ORDER BY config_id")
+    records = record.fetchall()
+    data = []
+    for record in records:
+        da = {}
+        da.update({'config_id': record[0], 'c_userid': record[1], 'hostaddress': record[2], 'portnumber': record[3],
+                   'serverName': record[4],'databaseName': record[5], 'config_username': record[6],
+                   'congif_password': record[7],'database_type': record[8]})
+        data.append(da)
+    context['rows'] = data
+    status=request.GET.get('status')
+    context['msg']=status
+    return render(request, 'configdetails.html', context)
+
+
+def addconfigdetails(request):
+    context = initialize_context(request)
+    user = context['user']['name']
+    record = cursor.execute("select user_id from users where user_fullname ='{}' ".format(user))
+    records = record.fetchone()
+    context['uid'] = records[0]
+    if request.method == 'POST':
+        userid = records[0]
+        hostid = request.POST.get('hostadd')
+        servername = request.POST.get('servername')
+        dbname = request.POST.get('dbname')
+        uname = request.POST.get('username')
+        pwd = request.POST.get('pwd')
+        dbtype = request.POST.get('dbtype')
+        portname = request.POST.get('port')
+        usenameregex = "^(?=(?:.*[a-z]){4})(?=.*[$@_])(?=.*[A-Z])[a-zA-Z$@_]{6}$"
+        pwdregex="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{6,18}$"
+        if re.match(usenameregex, uname):
+            if re.match(pwdregex, pwd):
+                print("hi")
+                sql = ("""insert into config_details(config_user_id, config_hostaddress, config_serverName,config_databaseName, config_username,
+                    config_password, config_database_type, config_PortName) values('{}','{}','{}','{}','{}','{}','{}','{}')"""
+                .format(userid, hostid, servername, dbname, uname, pwd, dbtype, portname))
+                cursor.execute(sql)
+                cursor.commit()
+            else:
+                return HttpResponseRedirect('addconfigdetails?status=Password_invalid')
+        else:
+            return HttpResponseRedirect('addconfigdetails?status=username_invalid')
+    status = request.GET.get('status')
+    context['msg'] = status
+    return render(request, 'addconfigdetails.html', context)
+
+
+def updatedata(request):
+    context = initialize_context(request)
+    uhostid = request.GET.get('uid')
+    sql = ("""select * from config_details where config_id='{}' """.format(uhostid))
+    record = cursor.execute(sql).fetchone()
+    da = {}
+    da.update({'c_userid': record[1], 'hostaddress': record[2], 'portnumber': record[3],
+               'serverName': record[4], 'databaseName': record[5], 'config_username': record[6],
+               'congif_password': record[7], 'database_type':record[8]})
+    context['rows'] = da
+    if request.method == 'POST':
+
+        hostid = request.POST.get('hostadd')
+        servername = request.POST.get('servername')
+        dbname = request.POST.get('dbname')
+        uname = request.POST.get('username')
+        pwd = request.POST.get('pwd')
+        dbtype = request.POST.get('dbtype')
+        portno=request.POST.get('port')
+        sql = ("""update config_details set  config_hostaddress='{}', config_serverName='{}',config_databaseName='{}',
+        config_username='{}',config_password='{}',config_database_type='{}',config_updated_at=getdate(), config_PortName='{}'
+         where config_id='{}' """.format( hostid, servername, dbname, uname, pwd, dbtype, portno,uhostid))
+        cursor.execute(sql)
+        cursor.commit()
+        return HttpResponseRedirect('configdetails?status=Updated Successfully')
+    return render(request, 'update.html', context)
+
+
+def deletedata(request):
+    uhostid = request.GET.get('uid')
+    print(uhostid)
+    sql = ("""update  config_details set config_is_deleted='1' where config_id='{}' """
+           .format(uhostid))
+    cursor.execute(sql)
+    cursor.commit()
+    #return redirect('configdetails', args=(video_id,))
+    return HttpResponseRedirect('configdetails?status=Deleted Successfully')
+
+
+
+def dbuserinsert(user):
+    usname = user['displayName']
+    uemail = user['mail']
+    mobileno = user['mobilePhone']
+    rec = ("""select user_fullname from users where user_fullname = '{}' """.format(usname))
+    record = cursor.execute(rec).fetchone()
+    print(record)
+    if record is None:
+        sql = (
+            """insert into users(user_fullname, user_mail, user_mobile,user_is_session_active) values('{}','{}','{}','1')"""
+            .format(usname, uemail, mobileno))
+        cursor.execute(sql)
+        cursor.commit()
+    else:
+        sql = (
+            """update users set user_updated_at=getdate(),user_is_session_active='1' where user_fullname = '{}' """.format(
+                usname))
+        cursor.execute(sql)
+        cursor.commit()
+
+
+def dbdataupdate(user):
+    session_active = '0'
+    uname = user['name']
+    print(uname)
+    sql = (
+        """update users set user_updated_at=getdate(),user_is_session_active='0' where user_fullname = '{}' """.format(
+            uname))
+
+    cursor.execute(sql)
+    cursor.commit()
+
+
+def sign_out(request):
+    context = initialize_context(request)
+    user = context['user']
+    dbdataupdate(user)
+    # Clear out the user and token
+    remove_user_and_token(request)
+
+    return HttpResponseRedirect(reverse('home'))
 
 
 def calendar(request):
@@ -169,187 +388,3 @@ def newevent(request):
     else:
         # Render the form
         return render(request, 'newevent.html', context)
-
-
-def subscriptions(request):
-    context = initialize_context(request)
-
-    azure_token = get_azure_management_token(request)
-
-    events = get_subscription_list(azure_token)
-
-    if events:
-        context['subscriptionList'] = events['value']
-
-    return render(request, 'subscriptions.html', context)
-
-
-def subscriptionsresource(request):
-    context = initialize_context(request)
-    request.session['subscriptionId'] = request.GET.get('subId', '')
-    context['subscriptionId'] = request.session.get('subscriptionId')
-
-    return render(request, 'subscriptions_resource.html', context)
-
-
-def subscriptionsresource_file_management(request):
-    context = initialize_context(request)
-    context['subscriptionId'] = request.session.get('subscriptionId')
-    azure_token = get_azure_management_token(request)
-
-    storageaccountlist = get_storageaccount_list(azure_token, context['subscriptionId'])
-
-    if storageaccountlist:
-        context['storageAccountList'] = storageaccountlist['value']
-    return render(request, 'file_management.html', context)
-
-def bloblist(request):
-    context = initialize_context(request)
-    azure_token = get_azure_management_token(request)
-
-    request.session['storageAccountName'] = request.GET.get('qid', '')
-    request.session['acc_name'] = request.GET.get('acc_name', '')
-    context['storageAccountName'] = request.session.get('storageAccountName')
-    context['acc_name'] = request.session.get('acc_name')
-
-    blob_list = get_blob_list(azure_token, context['storageAccountName'])
-    print(blob_list)
-
-    if blob_list:
-        context['blob_list'] = blob_list['value']
-
-    return render(request, 'bloblist.html', context)
-
-def blobdetails(request):
-    context = initialize_context(request)
-    token = get_token(request)
-
-    request.session['blobid'] = request.GET.get('blobid', '')
-    request.session['container_name'] = request.GET.get('container_name', '')
-    context['storageAccountName'] = request.session.get('storageAccountName')
-    context['blobid'] = request.session.get('blobid')
-    context['acc_name'] = request.session.get('acc_name')
-    context['container_name'] = request.session.get('container_name')
-
-    azure_token = 'tSVdeBiewtJ3K1F7qMzc1FBAdqDkcj+tcCdtYsbjGlnM0qQA/fDP758U5cevGvKolBFAl6TxC4CapVwCVcACnA=='
-
-    blob_details = get_blob_details(azure_token, context['acc_name'], context['container_name'])
-
-    if blob_details:
-        context['blob_details'] = blob_details
-    try:
-        if request.method == 'POST' and request.FILES['myfile']:
-            myfile = request.FILES['myfile']
-            block_blob_service = BlockBlobService('setuptest1906', 'ttSVdeBiewtJ3K1F7qMzc1FBAdqDkcj+tcCdtYsbjGlnM0qQA/fDP758U5cevGvKolBFAl6TxC4CapVwCVcACnA==')
-            block_blob_service.create_blob_from_bytes(context['container_name'], myfile.name, myfile.read())
-            context['msg'] = ' Uloaded success'
-            return render(request, 'blobdetails.html', context )
-    except Exception as e:
-        errormsg = str(e).split('.')
-        context['msg'] = errormsg[0]
-        return render(request, 'blobdetails.html', context)
-
-    return render(request, 'blobdetails.html', context)
-
-def configdetails(request):
-    context = initialize_context(request)
-    record =cursor.execute("select * from config_details ORDER BY id")
-    records = record.fetchall()
-    data = []
-    for record in records:
-        da = {}
-        da.update({'userid': record[1], 'hostid': record[2], 'servername': record[3], 'database': record[4]})
-        print(type(da))
-        data.append(da)
-    context['rows']=data
-    return render(request, 'configdetails.html', context)
-
-def updatedata(request):
-    context = initialize_context(request)
-    uhostid = request.GET.get('uid')
-
-    sql = ("""select * from config_details where userid='{}' """.format(uhostid))
-    record= cursor.execute(sql).fetchone()
-    print(record)
-    da = {}
-    da.update({'userid': record[1], 'hostid': record[2], 'servername': record[3], 'database': record[4]})
-    context['rows'] = da
-    if request.method == 'POST':
-        print('hi')
-        userid = request.POST.get('userid')
-        print(userid)
-        hostid = request.POST.get('hostid')
-        servername = request.POST.get('servername')
-        database = request.POST.get('database')
-        sql = ("""update config_details set userid ='{}', hostId='{}', serverName='{}',data_base='{}' where userid='{}' """
-               .format(userid, hostid, servername, database, userid))
-        cursor.execute(sql)
-        cursor.commit()
-        return HttpResponseRedirect('configdetails')
-    return render(request, 'update.html', context)
-
-def deletedata(request):
-    uhostid = request.GET.get('uid')
-
-    sql = ("""delete from config_details where userid='{}' """.format(uhostid))
-    cursor.execute(sql)
-    cursor.commit()
-
-    return HttpResponseRedirect('configdetails')
-def addconfigdetails(request):
-    context = initialize_context(request)
-    if request.method == 'POST':
-        userid= request.POST.get('userid')
-        hostid = request.POST.get('hostid')
-        servername = request.POST.get('servername')
-        database = request.POST.get('database')
-        sql = ("""insert into config_details(userid, hostId, serverName,data_base) values('{}','{}','{}','{}')"""
-               .format(userid, hostid, servername, database))
-        cursor.execute(sql)
-        cursor.commit()
-    return render(request, 'addconfigdetails.html', context)
-
-
-def userdata(user):
-    global usname, uemail, mobileno, cdate
-    usname = user['displayName']
-    uemail = user['mail']
-    mobileno = user['mobilePhone']
-    cdate = user['mailboxSettings']['automaticRepliesSetting']['scheduledStartDateTime']['dateTime']
-    cdate = cdate[:10]
-
-def dbdatainsert():
-    rec = ("""select username from users where username = '{}' """.format(usname))
-    record = cursor.execute(rec).fetchone()
-    print(record)
-    if record is None:
-        print("hi")
-        sql = ("""insert into users(username, useremail, mbno,created_date) values('{}','{}','{}','{}')"""
-               .format(usname, uemail, mobileno, cdate))
-        cursor.execute(sql)
-        cursor.commit()
-    else:
-        session_active='1'
-        sql = ("""update users set created_date='{}',is_session_active='{}' where username = '{}' """.format(cdate,  session_active, usname)
-               .format(usname, uemail, mobileno, cdate))
-        cursor.execute(sql)
-        cursor.commit()
-
-def dbdataupdate(user):
-    session_active='0'
-    uname=user['name']
-    print(uname)
-    sql = ("""update users set is_session_active='{}' where username = '{}' """.format(session_active, uname))
-
-    cursor.execute(sql)
-    cursor.commit()
-
-def sign_out(request):
-    context = initialize_context(request)
-    user = context['user']
-    dbdataupdate(user)
-    # Clear out the user and token
-    remove_user_and_token(request)
-
-
-    return HttpResponseRedirect(reverse('home'))

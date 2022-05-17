@@ -20,4 +20,5 @@ path('deletedata', deletedata, name='deletedata'),
 
 
 
+
     ]
