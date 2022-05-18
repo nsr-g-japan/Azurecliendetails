@@ -18,7 +18,26 @@ padding-left: 10px;
  padding-right: 10px;
     height="30px"
 }
-.bottonc1 {background-color: #4CAF50;}
+.bottonc1 {
+ background-color: #04AA6D;
+    color: black;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 15px;
+    padding: 3px 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    }
+.bottonc2 {
+background-color: red;
+    color: white;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 15px;
+    padding: 3px 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+}
 
 </style>
   <h1>
@@ -63,10 +82,10 @@ padding-left: 10px;
     <td>&emsp;{{i.config_username}}</td>
     <td>&emsp;{{i.congif_password}}</td>
     <td>&emsp;{{i.portnumber}}</td>
-        <td><div>
+        <td><div class="action">
             &emsp;
          <a href="updatedata?uid={{ i.config_id }}" ><button class="bottonc1" >Edit</button></a>
-         <a href="deletedata?uid={{ i.config_id }}"   onclick="clicked(event)" ><button class="bottonc1" >Delete</button> </a>
+         <a href="deletedata?uid={{ i.config_id }}"   onclick="clicked(event)" ><button class="bottonc2" >Delete</button> </a>
         </div></td>
 
 

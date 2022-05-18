@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-    .error{
+    .validation{
 background-color: #FF6461;
 padding-top: 10px;
 padding-bottom: 10px;
@@ -9,6 +9,52 @@ padding-left: 10px;
  padding-right: 10px;
     height="30px"
 }
+.bottonc2 {
+background-color: #4169e1;
+    color: black;
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 15px;
+    padding: 3px 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+}
+    .form-valid{
+    margin-bottom: 10px;
+    padding-bottom:20px;
+    position:relative;
+  }
+  .form-valid.success input{
+  border-radius: 5px;
+    border-style: solid;
+    border-color: green
+  }
+   .form-valid.error input{
+    border-color: red
+  }
+  .form-valid.success select{
+  border: 3px solid green;
+    border-radius: 5px;
+    border-style: solid;
+
+  }
+   .form-valid.error select{
+    border-color: red
+  }
+   .form-valid small{
+    color: red;
+    bottom: 0;
+    left: 150px;
+    position: absolute;
+    visibility: hidden;
+  }
+  .form-valid.error small{
+
+    visibility: visible;
+  }
+  .botton{
+  background-color: #3498db
+  }
 </style>
 <h1>
    Add Configuration Details
@@ -18,70 +64,125 @@ padding-left: 10px;
     <a href="{% url 'configdetails' %}" class="btn btn-light btn-sm mb-3 float-right">Back</a>
 </h1>
 {% if msg == "username_invalid" or msg == "Password_invalid" %}
-    <div class="error">
+    <div class="validation">
         <font color="white">{{msg}}</font>
     </div>
     {% endif %}
-<form method="post" name = "myForm" onsubmit = "return(validate());">
+<form method="post" id="form" name = "myForm" onsubmit="return validateInputs()" >
 {% csrf_token %}
-    DataBase Type:&emsp;&emsp;  <select type="text"  name="dbtype">
-          <option>Select Data Type</option>
-<option  > SQL</option>
-<option  > MYSQL</option>
-<option  > POSTGRESQL</option>
-</select><br><br>
-    Host Address:&emsp; &emsp; <input type="text" name="hostadd" placeholder="Enter Host Address" ><br><br>
-    Server Name:&emsp; &emsp;&nbsp; <input type="text" name="servername" placeholder="Enter Server Name" ><br><br>
-    DataBase Name: &emsp;  <input type="text" name="dbname" placeholder="Enter DataBase Name" ><br><br>
-    User Name :&emsp; &emsp; &nbsp;&nbsp;        <input type="text" name="username" placeholder="Enter User Name" ><br><br>
-    Password : &emsp; &emsp;&emsp;&nbsp; <input type="text" name="pwd" placeholder="Enter Password" ><br><br>
-    Port Number :  &emsp; &nbsp;&nbsp;&nbsp; <input type="text" name="port" placeholder="Enter Port Number" ><br><br>
-
-                  <button type="submit">Add Data</button><br><br>
+    <div class="form-valid">
+    DataBase Type:&emsp;&emsp;  <select type="text" id="dbdrop" name="dbtype">
+          <option value="">Select Data Type</option>
+<option value="SQL" > SQL</option>
+<option  value="MYSQL"> MYSQL</option>
+<option  value="POSTGRESQL"> POSTGRESQL</option>
+</select>
+        <small>Error message</small>
+    </div>
+    <div class="form-valid">
+    Host Address:&emsp; &emsp; <input type="text" id="hostname" name="hostadd" placeholder="Enter Host Address" >
+    <small>Error message</small>
+    </div>
+    <div class="form-valid">
+    Server Name:&emsp; &emsp;&nbsp; <input type="text" id="servername" name="servername" placeholder="Enter Server Name" >
+    <small>Error message</small>
+    </div>
+    <div class="form-valid">
+        DataBase Name: &emsp;      <input type="text" id="dbname" name="dbname" placeholder="Enter DataBase Name" >
+    <small>Error message</small>
+    </div>
+    <div class="form-valid">
+    User Name :&emsp; &emsp; &nbsp;&nbsp; <input type="text"  id="username" name="username" placeholder="Enter User Name" >
+    <small>Error message</small>
+    </div>
+    <div class="form-valid">
+    Password : &emsp; &emsp;&emsp;&nbsp; <input type="text" id="pwd" name="pwd" placeholder="Enter Password" >
+    <small>Error message</small>
+    </div>
+<div class="form-valid">
+    Port Number :  &emsp; &nbsp;&nbsp;&nbsp; <input type="text" id="portno" name="port"  placeholder="Enter Port Number" >
+    <small>Error message</small>
+</div>
+    <button type="submit" class="bottonc2" >Add Data</button><br><br>
 
 </form>
 
-<script type = "text/javascript">
+<script>
 
-      function validate() {
-        if( document.myForm.dbtype.value == "" ) {
-            showError( "Please provide your Databasetype!" );
-            document.myForm.dbtype.focus() ;
-            return false;
-         }
+    const form=document.getElementById('form')
+    const dbtype=document.getElementById('dbdrop')
+    const hostname=document.getElementById('hostname')
+    const servername=document.getElementById('servername')
+    const dbname=document.getElementById('dbname')
+    const username=document.getElementById('username')
+    const pwd=document.getElementById('pwd')
+    const portno=document.getElementById('portno')
 
-         if( document.myForm.hostadd.value == "" ) {
-            alert( "Please provide your Host Address!" );
-            document.myForm.hostadd.focus() ;
-            return false;
-         }
-         if( document.myForm.servername.value == "" ) {
-            alert( "Please provide your Servername!" );
-            document.myForm.servername.focus() ;
-            return false;
-         }
-         if( document.myForm.dbname.value == "" ) {
-            alert( "Please provide your Database Name!" );
-            document.myForm.dbname.focus() ;
-            return false;
-         }
-         if( document.myForm.username.value == "" ) {
-            alert( "Please provide your UserName!" );
-            document.myForm.username.focus() ;
-            return false;
-         }
-         if( document.myForm.pwd.value == "" ) {
-            alert( "Please provide your password!" );
-            document.myForm.pwd.focus() ;
-            return false;
-         }
-         if( document.myForm.port.value == "" ) {
-            alert( "Please provide your Port Number!" );
-            document.myForm.port.focus() ;
-            return false;
-         }
-         return( true );
-      }
+
+
+
+    function showError (input, message) {
+        const formValid = input.parentElement;
+        formValid.className='form-valid error';
+        const small=formValid.querySelector('small');
+        small.innerText= message;
+    }
+    function showSuccess(input){
+        formValid = input.parentElement;
+        formValid.className='form-valid success';
+        }
+
+    function validateInputs(){
+
+    if (dbtype.value === ''){
+    showError(dbdrop, 'DataBase Type requried')
+
+    }else{
+    showSuccess(dbdrop)
+    }
+
+    if (hostname.value === ''){
+    showError(hostname, 'Host Address requried')
+
+    }else{
+    showSuccess(hostname)
+    }
+    if (servername.value === ''){
+    showError(servername, 'Server name requried')
+    }else{
+    showSuccess(servername)
+    }
+    if (dbname.value === ''){
+    showError(dbname, 'DataBase name requried')
+    }else{
+    showSuccess(dbname)
+    }
+    if (username.value === ''){
+    showError(username, 'user name requried')
+    }else{
+    showSuccess(username)
+    }
+    if (pwd.value === ''){
+    showError(pwd, 'Password requried')
+    }else{
+    showSuccess(pwd)
+    }
+
+    if (portno.value === ''){
+    showError(portno, 'Port Number requried')
+    }else{
+    showSuccess(portno)
+    }
+    if (dbdrop.value !== '' && hostname.value !== '' && servername.value !== '' &&
+            dbname.value !== '' && username.value !== '' && pwd.value !== '' && portno.value !== '') {
+            return true;
+        }
+
+
+  return false; };
+
+
+
 
 </script>
 

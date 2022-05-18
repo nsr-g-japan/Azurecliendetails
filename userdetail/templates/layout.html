@@ -32,6 +32,12 @@
               <li class="nav-item" data-turbolinks="false">
                 <a class="nav-link{% if request.resolver_match.view_name == 'calendar' %} active{% endif %}" href="{% url 'calendar' %}">Calendar</a>
               </li>
+            <li class="nav-item" data-turbolinks="false">
+                <a class="nav-link{% if request.resolver_match.view_name == 'subscriptions' %} active{% endif %}" href="{% url 'subscriptions' %}">Subscriptions</a>
+              </li>
+            <li class="nav-item" data-turbolinks="false">
+                <a class="nav-link{% if request.resolver_match.view_name == 'configdetails' %} active{% endif %}" href="{% url 'configdetails' %}">Configdetails</a>
+              </li>
             {% endif %}
           </ul>
           <ul class="navbar-nav justify-content-end">

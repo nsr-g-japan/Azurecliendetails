@@ -194,31 +194,38 @@ def addconfigdetails(request):
     record = cursor.execute("select user_id from users where user_fullname ='{}' ".format(user))
     records = record.fetchone()
     context['uid'] = records[0]
+    hostid = request.POST.get('hostname')
+    print(hostid)
     if request.method == 'POST':
+        myform = request.POST.get('myForm')
+        print(myform)
+
+        print('helloo')
         userid = records[0]
         hostid = request.POST.get('hostadd')
+        print(hostid)
         servername = request.POST.get('servername')
         dbname = request.POST.get('dbname')
         uname = request.POST.get('username')
         pwd = request.POST.get('pwd')
         dbtype = request.POST.get('dbtype')
         portname = request.POST.get('port')
-        usenameregex = "^(?=(?:.*[a-z]){4})(?=.*[$@_])(?=.*[A-Z])[a-zA-Z$@_]{6}$"
-        pwdregex="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{6,18}$"
-        if re.match(usenameregex, uname):
-            if re.match(pwdregex, pwd):
-                print("hi")
-                sql = ("""insert into config_details(config_user_id, config_hostaddress, config_serverName,config_databaseName, config_username,
+        #usenameregex = "^(?=(?:.*[a-z]){4})(?=.*[$@_])(?=.*[A-Z])[a-zA-Z$@_]{6}$"
+        #pwdregex="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{6,18}$"
+        print("hi")
+        sql = ("""insert into config_details(config_user_id, config_hostaddress, config_serverName,config_databaseName, config_username,
                     config_password, config_database_type, config_PortName) values('{}','{}','{}','{}','{}','{}','{}','{}')"""
                 .format(userid, hostid, servername, dbname, uname, pwd, dbtype, portname))
-                cursor.execute(sql)
-                cursor.commit()
-            else:
-                return HttpResponseRedirect('addconfigdetails?status=Password_invalid')
-        else:
-            return HttpResponseRedirect('addconfigdetails?status=username_invalid')
-    status = request.GET.get('status')
-    context['msg'] = status
+        cursor.execute(sql)
+        cursor.commit()
+    else:
+        print('errorrrr')
+            #else:
+             #   return HttpResponseRedirect('addconfigdetails?status=Password_invalid')
+        #else:
+         #   return HttpResponseRedirect('addconfigdetails?status=username_invalid')
+    #status = request.GET.get('status')
+    #context['msg'] = status
     return render(request, 'addconfigdetails.html', context)
 
 
