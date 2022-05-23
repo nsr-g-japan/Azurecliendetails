@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 
 import pyodbc as pyodbc
 from dateutil import tz, parser
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, redirect
 
 from django.urls import reverse
@@ -179,12 +179,12 @@ def configdetails(request):
     for record in records:
         da = {}
         da.update({'config_id': record[0], 'c_userid': record[1], 'hostaddress': record[2], 'portnumber': record[3],
-                   'serverName': record[4],'databaseName': record[5], 'config_username': record[6],
-                   'congif_password': record[7],'database_type': record[8]})
+                   'serverName': record[4], 'databaseName': record[5], 'config_username': record[6],
+                   'congif_password': record[7], 'database_type': record[8]})
         data.append(da)
     context['rows'] = data
-    status=request.GET.get('status')
-    context['msg']=status
+    status = request.GET.get('status')
+    context['msg'] = status
     return render(request, 'configdetails.html', context)
 
 
@@ -195,37 +195,27 @@ def addconfigdetails(request):
     records = record.fetchone()
     context['uid'] = records[0]
     hostid = request.POST.get('hostname')
-    print(hostid)
+
     if request.method == 'POST':
         myform = request.POST.get('myForm')
-        print(myform)
-
-        print('helloo')
         userid = records[0]
         hostid = request.POST.get('hostadd')
-        print(hostid)
         servername = request.POST.get('servername')
         dbname = request.POST.get('dbname')
         uname = request.POST.get('username')
         pwd = request.POST.get('pwd')
         dbtype = request.POST.get('dbtype')
         portname = request.POST.get('port')
-        #usenameregex = "^(?=(?:.*[a-z]){4})(?=.*[$@_])(?=.*[A-Z])[a-zA-Z$@_]{6}$"
-        #pwdregex="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{6,18}$"
-        print("hi")
+        # usenameregex = "^(?=(?:.*[a-z]){4})(?=.*[$@_])(?=.*[A-Z])[a-zA-Z$@_]{6}$"
+        # pwdregex="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!#%*?&]{6,18}$"
+
         sql = ("""insert into config_details(config_user_id, config_hostaddress, config_serverName,config_databaseName, config_username,
                     config_password, config_database_type, config_PortName) values('{}','{}','{}','{}','{}','{}','{}','{}')"""
-                .format(userid, hostid, servername, dbname, uname, pwd, dbtype, portname))
+               .format(userid, hostid, servername, dbname, uname, pwd, dbtype, portname))
         cursor.execute(sql)
         cursor.commit()
-    else:
-        print('errorrrr')
-            #else:
-             #   return HttpResponseRedirect('addconfigdetails?status=Password_invalid')
-        #else:
-         #   return HttpResponseRedirect('addconfigdetails?status=username_invalid')
-    #status = request.GET.get('status')
-    #context['msg'] = status
+        return HttpResponseRedirect('configdetails?status=Created Successfully')
+
     return render(request, 'addconfigdetails.html', context)
 
 
@@ -237,20 +227,19 @@ def updatedata(request):
     da = {}
     da.update({'c_userid': record[1], 'hostaddress': record[2], 'portnumber': record[3],
                'serverName': record[4], 'databaseName': record[5], 'config_username': record[6],
-               'congif_password': record[7], 'database_type':record[8]})
+               'congif_password': record[7], 'database_type': record[8]})
     context['rows'] = da
     if request.method == 'POST':
-
         hostid = request.POST.get('hostadd')
         servername = request.POST.get('servername')
         dbname = request.POST.get('dbname')
         uname = request.POST.get('username')
         pwd = request.POST.get('pwd')
         dbtype = request.POST.get('dbtype')
-        portno=request.POST.get('port')
+        portno = request.POST.get('port')
         sql = ("""update config_details set  config_hostaddress='{}', config_serverName='{}',config_databaseName='{}',
         config_username='{}',config_password='{}',config_database_type='{}',config_updated_at=getdate(), config_PortName='{}'
-         where config_id='{}' """.format( hostid, servername, dbname, uname, pwd, dbtype, portno,uhostid))
+         where config_id='{}' """.format(hostid, servername, dbname, uname, pwd, dbtype, portno, uhostid))
         cursor.execute(sql)
         cursor.commit()
         return HttpResponseRedirect('configdetails?status=Updated Successfully')
@@ -264,9 +253,25 @@ def deletedata(request):
            .format(uhostid))
     cursor.execute(sql)
     cursor.commit()
-    #return redirect('configdetails', args=(video_id,))
+    # return redirect('configdetails', args=(video_id,))
     return HttpResponseRedirect('configdetails?status=Deleted Successfully')
 
+
+def server_is_exists(request):
+    if request.method == 'POST':
+        sname = request.POST.get('server_name')
+
+        rec = ("""select config_serverName from config_details where config_serverName='{}' """.format(sname))
+        record = cursor.execute(rec).fetchone()
+        print(record)
+        if record is None:
+            print("If working now")
+            return HttpResponse('OK')
+        else:
+            print('else working now')
+            return HttpResponse("user already Exists")
+    else:
+        print("ajax Not calling")
 
 
 def dbuserinsert(user):
@@ -279,7 +284,7 @@ def dbuserinsert(user):
     if record is None:
         sql = (
             """insert into users(user_fullname, user_mail, user_mobile,user_is_session_active) values('{}','{}','{}','1')"""
-            .format(usname, uemail, mobileno))
+                .format(usname, uemail, mobileno))
         cursor.execute(sql)
         cursor.commit()
     else:
