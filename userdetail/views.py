@@ -12,7 +12,8 @@ from .auth_helper import *
 from .graph_helper import *
 import logging
 
-db = pyodbc.connect('Driver={SQL server};' 'server=Nisarbasha;' 'Database=dwproject;' 'Trusted_connection=yes;')
+
+db = pyodbc.connect('Driver={ODBC Driver 17 for SQL Server};' 'server=Nisarbasha;' 'Database=dwproject;' 'Trusted_connection=yes;')
 cursor = db.cursor()
 
 # Creating and Configuring Logger
@@ -74,8 +75,7 @@ def landingpage(request):
     user = get_user(result['access_token'])
 
     dbuserinsert(user)
-    print(type(user))
-    print(user['displayName'])
+
     # Store user
     store_user(request, user)
     return HttpResponseRedirect(reverse('home'))
@@ -185,6 +185,7 @@ def configdetails(request):
     context['rows'] = data
     status = request.GET.get('status')
     context['msg'] = status
+
     return render(request, 'configdetails.html', context)
 
 
@@ -257,7 +258,8 @@ def deletedata(request):
     return HttpResponseRedirect('configdetails?status=Deleted Successfully')
 
 
-def server_is_exists(request):
+
+def serverisexists(request):
     if request.method == 'POST':
         sname = request.POST.get('server_name')
 
@@ -265,13 +267,37 @@ def server_is_exists(request):
         record = cursor.execute(rec).fetchone()
         print(record)
         if record is None:
-            print("If working now")
+            print("single If working now")
             return HttpResponse('OK')
         else:
             print('else working now')
             return HttpResponse("user already Exists")
     else:
         print("ajax Not calling")
+
+
+def uniquedata(request):
+    if request.method == 'POST':
+        sname = request.POST.get('server_name')
+        name = request.POST.get('name')
+        dbtype = request.POST.get('dbtype')
+        hname = request.POST.get('hostname')
+        dname = request.POST.get('dbname')
+        pname = request.POST.get('portno')
+        rec = ("""select config_serverName from config_details where config_serverName='{}' and config_databaseName = '{}' and 
+                config_database_type = '{}' and config_username= '{}' and config_PortName= '{}' and config_hostaddress='{}'  """
+               .format(sname,dname,dbtype,name, pname,hname))
+        record = cursor.execute(rec).fetchone()
+        print(record)
+        if record is None:
+            print("all If working now")
+            return HttpResponse('OK')
+        else:
+            print('new else working now')
+            return HttpResponse("user already Exists")
+    else:
+        print("ajax Not calling")
+
 
 
 def dbuserinsert(user):

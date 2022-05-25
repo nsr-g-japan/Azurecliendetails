@@ -1,24 +1,6 @@
-{% extends "layout.html" %}
-{% block content %}
+
 <style>
-    .validation{
-background-color: #FF6461;
-padding-top: 10px;
-padding-bottom: 10px;
-padding-left: 10px;
- padding-right: 10px;
-    height="30px"
-}
-.bottonc2 {
-background-color: #4169e1;
-    color: black;
-    font-family: 'Source Sans Pro', sans-serif;
-    font-size: 15px;
-    padding: 3px 12px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 5px;
-}
+
 .err_msg{
 color: red;
 }
@@ -28,15 +10,10 @@ color: red;
    Add Configuration Details
     <a href="{% url 'configdetails' %}" class="btn btn-light btn-sm mb-3 float-right">Back</a>
 </h1>
-{% if msg == "username_invalid" or msg == "Password_invalid" %}
-    <div class="validation">
-        <font color="white">{{msg}}</font>
-    </div>
-    {% endif %}
-<form method="post" id="form" name = "myForm" onsubmit="return uservalidation()" >
+<form method="post" id="form" name = "myForm" onsubmit="return checkname()" >
 {% csrf_token %}
-    <div class="form-valid">
-        DataBase Type:&emsp;&emsp;  <select type="text" id="dbdrop" name="dbtype" >
+    <div>
+        DataBase Type:&emsp;&emsp;  <select  id="dbdrop" name="dbtype" >
             <option value="">Select Data Type</option>
             <option value="SQL" > SQL</option>
             <option  value="MYSQL"> MYSQL</option>
@@ -44,23 +21,17 @@ color: red;
             </select>
             <span class="err_msg" id="db_type_err"></span>
     </div><br>
-
-    <div class="form-valid">
+        <div>
             Host Address:&emsp; &emsp; <input type="text" id="hostname" name="hostadd" placeholder="Enter Host Address" >
             <span class="err_msg" id="host_name_err"></span>
     </div><br>
 
-    <div>
-            Server Name:&emsp; &emsp;&nbsp; <input type="text" id="server_name" name="servername" placeholder="Enter Server Name" >
-            <span class="err_msg" id="server_name_err"></span>
-    </div><br>
-
-    <div class="form-valid">
+        <div>
         DataBase Name: &emsp;      <input type="text" id="dbname" name="dbname" placeholder="Enter DataBase Name" >
         <span class="err_msg" id="db_name_err"></span>
     </div><br>
 
-    <div class="form-valid">
+    <div>
             User Name :&emsp; &emsp; &nbsp;&nbsp; <input type="text"  id="username" name="username" placeholder="Enter User Name" >
             <span class="err_msg" id="user_name_err"></span>
     </div><br>
@@ -70,9 +41,14 @@ color: red;
 
     </div><br>
 
-    <div class="form-valid">
+    <div>
         Port Number :  &emsp; &nbsp;&nbsp;&nbsp; <input type="text" id="portno" name="port"  placeholder="Enter Port Number" >
         <span class="err_msg" id="port_no_err"></span>
+    </div><br>
+
+    <div>
+            Server Name:&emsp; &emsp;&nbsp; <input type="text" id="server_name" name="servername" placeholder="Enter Server Name" >
+            <span class="err_msg" id="server_name_err"></span>
     </div><br>
     <button type="submit" class="bottonc2" >Add Data</button>
 
@@ -80,12 +56,23 @@ color: red;
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 <script>
-
-function uservalidation()
+function checkname()
 {
     var error =false;
     var numbercheck =/^[0-9\s\*]+$/;
+    var server_name = document.getElementById('server_name').value.trim();
     var name = document.getElementById('username').value.trim();
+    var dbtype = document.getElementById('dbdrop').value.trim();
+    var hostname = document.getElementById('hostname').value.trim();
+    var dbname = document.getElementById('dbname').value.trim();
+    var portno = document.getElementById('portno').value.trim();
+
+    if(server_name == "") {
+        $("#server_name").css("border","red Solid 3px");
+        $("#server_name_err").html("Server name is Required");
+        error = true;
+    }
+
     if(name == "") {
         $("#username").css("border","red Solid 3px");
         $("#user_name_err").html("username Required");
@@ -95,7 +82,7 @@ function uservalidation()
         $("#user_name_err").html("");
     }
 
-    var dbtype = document.getElementById('dbdrop').value.trim();
+
     if(dbtype == "") {
         $("#dbdrop").css("border","red Solid 3px");
         $("#db_type_err").html("DataBase Type Required");
@@ -105,7 +92,7 @@ function uservalidation()
         $("#db_type_err").html("");
     }
 
-    var hostname = document.getElementById('hostname').value.trim();
+
     if(hostname == "") {
         $("#hostname").css("border","red Solid 3px");
         $("#host_name_err").html("Host Address Required");
@@ -116,34 +103,7 @@ function uservalidation()
         $("#host_name_err").html("");
     }
 
-    var server_name = document.getElementById('server_name').value.trim();
-    if(server_name == "") {
-        $("#server_name").css("border","red Solid 3px");
-        $("#server_name_err").html("Server name is Required");
-        error = true;
-    }else if(server_name != ""){
 
-        $.ajax({
-            type: 'post',
-            url: 'server_is_exists',
-            contentType: "application/json; charset=utf-8",
-            data: {server_name:server_name, csrfmiddlewaretoken: '{{ csrf_token }}' },
-            dataType: "json",
-            async: false,
-            success: function(msg){
-              if(msg=="OK"){
-                $("#server_name").css("border","green Solid 3px");
-                $("#server_name_err").html("");
-              }else{
-                    $("#server_name").css("border","red Solid 3px");
-                    $("#server_name_err").html("Server name is exists");
-                    error = true;
-                }
-                }
-        });
-    }
-
-    var dbname = document.getElementById('dbname').value.trim();
     if(dbname == "") {
         $("#dbname").css("border","red Solid 3px");
         $("#db_name_err").html("Database Name is Required");
@@ -153,7 +113,7 @@ function uservalidation()
         $("#db_name_err").html("");
     }
 
-    var portno = document.getElementById('portno').value.trim();
+
     if(portno == "") {
         $("#portno").css("border","red Solid 3px");
         $("#port_no_err").html("Port Number Required");
@@ -168,17 +128,63 @@ function uservalidation()
         $("#port_no_err").html("");
     }
 
-    if (error == true) {
-        return false;
-    } else {
-        return true;
+
+
+    if(server_name != "" && name != "" && dbtype != "" && hostname != "" && dbname != "" && portno!= ""){
+             $.ajax({
+            type: 'post',
+            url: 'uniquedata',
+            data: {server_name:server_name, name:name, dbtype:dbtype, hostname:hostname, dbname:dbname, portno:portno, csrfmiddlewaretoken: '{{ csrf_token }}' },
+            async: false,
+            success: function (msg) {
+              if(msg=="OK"){
+                console.log('done');
+                $("#server_name").css("border","green Solid 3px");
+                $("#server_name_err").html("record done");
+
+              }else{
+                    $("#server_name").css("border","red Solid 3px");
+                    $("#server_name_err").html("Duplicate record");
+                    $("#username").css("border","red Solid 3px");
+                    $("#user_name_err").html("Duplicate record");
+                    error = true;
+                    console.log(error);
+                    }
+            }
+        });
+
     }
-return false;
+
+
+    if(server_name != ""){
+        $.ajax({
+            type: 'post',
+            url: 'serverisexists',
+            data: {server_name:server_name, csrfmiddlewaretoken: '{{ csrf_token }}' },
+            async: false,
+            success: function (msg) {
+              if(msg=="OK"){
+                console.log('done');
+                $("#server_name").css("border","green Solid 3px");
+                $("#server_name_err").html("");
+              }else{
+                    $("#server_name").css("border","red Solid 3px");
+                    $("#server_name_err").html("Server name is exists");
+                    error = true;
+                    console.log(error);
+                    }
+            }
+        });
+    }
+
+
+    if(error == true){
+        return false;
+        }
+        else{
+        return true;
+        }
 }
-
-
-
 </script>
 
 
-{% endblock %}

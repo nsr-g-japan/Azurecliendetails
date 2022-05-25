@@ -16,9 +16,9 @@ urlpatterns = [
     path('configdetails', configdetails, name='configdetails'),
     path('addconfigdetails', addconfigdetails, name='addconfigdetails'),
     path('updatedata', updatedata, name='updatedata'),
-path('deletedata', deletedata, name='deletedata'),
-
-
+    path('deletedata', deletedata, name='deletedata'),
+    path('serverisexists',serverisexists,name='serverisexists'),
+    path('uniquedata', uniquedata, name='uniquedata'),
 
 
     ]
